@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>稳行 · 离职求职打卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1EAD9;--paper-deep:#E7DDC7;--paper-card:#F8F3E7;
+  --ink:#242019;--ink-soft:#6b6152;--ink-faint:#a89d87;
+  --seal:#AD3B2A;--seal-dark:#832C20;--seal-tint:#F3DCD5;
+  --indigo:#2F4258;--indigo-tint:#DCE4EC;
+  --bronze:#96793F;--bronze-tint:#EFE6CC;
+  --line:#DCD0B4;--line-soft:#EADFC6;--radius:6px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background-color:var(--paper);background-image:radial-gradient(circle at 1px 1px, rgba(36,32,25,.045) 1px, transparent 0);background-size:14px 14px;color:var(--ink);font-family:'Noto Sans SC',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+h1,h2,h3,h4{font-family:'Noto Serif SC',serif;}
+button{-webkit-tap-highlight-color:transparent;font-family:inherit;}
+button:focus-visible{outline:2px solid var(--indigo);outline-offset:2px;}
+#app{max-width:480px;margin:0 auto;position:relative;min-height:100vh;background:var(--paper);opacity:0;transition:opacity .3s ease;}
+#app.ready{opacity:1;}
+
+.topbar{padding-top:22px;}
+.topbar-inner{text-align:center;padding:0 20px 14px;}
+.topbar-inner h1{font-weight:900;font-size:25px;margin:0 0 4px;letter-spacing:.08em;color:var(--ink);}
+.topbar-inner .sub{margin:0;font-size:12.5px;color:var(--ink-soft);}
+.brush-divider{height:3px;margin:8px 24px 0;background:linear-gradient(90deg,transparent 0%,var(--ink-faint) 15%,var(--bronze) 50%,var(--ink-faint) 85%,transparent 100%);opacity:.55;border-radius:2px;}
+
+.view{padding-bottom:calc(88px + env(safe-area-inset-bottom));min-height:60vh;}
+.section-title{font-size:15px;font-weight:700;margin:18px 20px 10px;}
+.section-title:first-child{margin-top:16px;}
+
+.today-card{background:var(--paper-card);border:1.5px solid var(--seal);border-radius:8px;padding:16px 17px;margin:18px 16px 20px;position:relative;}
+.today-label{font-size:11px;color:var(--seal-dark);font-weight:700;letter-spacing:.12em;margin-bottom:7px;}
+.today-date{font-size:12px;color:var(--ink-soft);margin-bottom:8px;}
+.today-task{font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.4;}
+.today-action{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:10px;}
+.today-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-faint);margin-bottom:13px;}
+.today-btn{width:100%;padding:12px;border-radius:6px;border:none;background:var(--seal);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.today-btn.done{background:var(--bronze-tint);color:#5c4a1f;}
+.today-empty{background:var(--paper-card);border:1px dashed var(--line);border-radius:8px;padding:20px;margin:18px 16px 20px;text-align:center;font-size:13px;color:var(--ink-soft);line-height:1.7;}
+
+.hero{display:flex;flex-direction:column;align-items:center;padding:4px 0 8px;}
+.ring-wrap{position:relative;width:124px;height:124px;}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ring-track{fill:none;stroke:var(--line);stroke-width:9;}
+.ring-fill{fill:none;stroke:var(--bronze);stroke-width:9;stroke-linecap:round;stroke-dasharray:263.89;stroke-dashoffset:263.89;transition:stroke-dashoffset .3s ease;}
+.hero-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif SC',serif;font-size:27px;font-weight:900;color:var(--ink);}
+.hero-sub{margin-top:8px;font-size:12.5px;color:var(--ink-soft);letter-spacing:.08em;}
+.stat-row{display:flex;justify-content:center;gap:30px;margin:14px 0 18px;}
+.stat-item{text-align:center;}
+.stat-item strong{display:block;font-family:'Noto Serif SC',serif;font-size:19px;font-weight:700;}
+.stat-item span{font-size:11.5px;color:var(--ink-soft);}
+.stat-item.warn strong{color:var(--seal-dark);}
+
+.time-block{padding:14px 16px;background:var(--paper-card);margin:0 16px 4px;border-radius:var(--radius);border:1px solid var(--line-soft);}
+.time-label-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;}
+.time-label-row span:first-child{color:var(--ink-soft);}
+.time-label-row span:last-child{font-weight:700;color:var(--indigo);}
+.time-bar-track{height:6px;background:var(--indigo-tint);border-radius:3px;overflow:hidden;}
+.time-bar-fill{height:100%;width:0%;background:var(--indigo);border-radius:3px;transition:width .3s ease;}
+.time-daylabel{margin:9px 0 0;font-size:12.5px;color:var(--ink-soft);}
+
+.milestone-list{margin:0 16px;display:flex;flex-direction:column;gap:8px;}
+.milestone-item{display:flex;align-items:center;gap:10px;background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:10px 12px;}
+.milestone-check{width:24px;height:24px;border-radius:4px;border:1.5px solid var(--line);background:var(--paper-deep);flex-shrink:0;cursor:pointer;padding:0;}
+.milestone-check.checked{background:var(--seal);border-color:var(--seal-dark);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);animation:stampIn .28s ease-out;}
+.milestone-body{flex:1;min-width:0;}
+.milestone-name{font-size:13px;font-weight:500;}
+.milestone-crit{font-size:11px;color:var(--ink-faint);margin-top:1px;}
+.milestone-date{font-size:11px;color:var(--ink-faint);white-space:nowrap;}
+
+.overdue-list{margin:0 16px;display:flex;flex-direction:column;gap:8px;}
+.overdue-item{display:flex;align-items:center;gap:8px;width:100%;background:var(--seal-tint);border:1px solid var(--seal);border-radius:var(--radius);padding:9px 11px;text-align:left;cursor:pointer;}
+.overdue-title{flex:1;font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.overdue-days{font-size:11px;color:var(--seal-dark);font-weight:700;white-space:nowrap;}
+.empty-tip{margin:0 16px;font-size:13px;color:var(--ink-soft);text-align:center;padding:16px;background:var(--paper-card);border-radius:var(--radius);border:1px dashed var(--line);}
+
+.modlist{margin:0 16px;display:flex;flex-direction:column;gap:11px;}
+.modrow{display:flex;align-items:center;gap:9px;background:none;border:none;padding:0;cursor:pointer;width:100%;}
+.modrow-name{font-size:12.5px;color:var(--ink);width:120px;text-align:left;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.modrow-bar{flex:1;height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden;display:block;}
+.modrow-bar span{display:block;height:100%;background:var(--bronze);border-radius:3px;}
+.modrow-pct{font-size:12px;color:var(--ink-soft);width:32px;text-align:right;flex-shrink:0;}
+
+.plan-note{margin:16px 16px 0;font-size:11.5px;color:var(--ink-faint);line-height:1.7;padding:11px 13px;background:var(--paper-card);border-radius:var(--radius);border:1px solid var(--line-soft);}
+.storage-hint{margin:10px auto 2px;font-size:10.5px;color:var(--ink-faint);text-align:center;}
+.reset-link{display:block;margin:8px auto 30px;background:none;border:none;color:var(--ink-faint);font-size:12px;text-decoration:underline;cursor:pointer;}
+
+.goals-toolbar{display:flex;gap:10px;padding:16px 16px 4px;}
+.goals-toolbar button{flex:1;padding:8px 0;border-radius:5px;border:1px solid var(--line);background:var(--paper-card);font-size:12.5px;color:var(--ink-soft);cursor:pointer;}
+#daily-list{padding:0 16px;}
+.modacc{border-bottom:1px solid var(--line-soft);padding:12px 0;}
+.modacc:last-child{border-bottom:none;}
+.modacc-head{width:100%;background:none;border:none;padding:0;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;color:var(--ink);}
+.modname{flex:1;font-size:14.5px;font-weight:500;}
+.modmeta{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);flex-shrink:0;}
+.chevron{transition:transform .2s ease;color:var(--ink-faint);font-size:11px;display:inline-block;}
+.modacc.open .chevron{transform:rotate(180deg);}
+.modacc-bar{height:3px;background:var(--line-soft);border-radius:2px;margin-top:9px;overflow:hidden;}
+.modacc-bar-fill{height:100%;width:0%;background:var(--bronze);border-radius:2px;transition:width .25s ease;}
+.modacc-body{margin-top:13px;}
+
+.daycard{display:flex;gap:11px;background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 13px;margin-bottom:9px;position:relative;}
+.daycard.today{border-color:var(--seal);border-width:1.5px;}
+.daycard.overdue{border-color:var(--seal);}
+.daycheck{width:29px;height:29px;border-radius:5px;border:1.5px solid var(--line);background:var(--paper-deep);flex-shrink:0;cursor:pointer;margin-top:1px;padding:0;}
+.daycheck.checked{background:var(--seal);border-color:var(--seal-dark);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);animation:stampIn .28s ease-out;}
+@keyframes stampIn{0%{transform:scale(1.6) rotate(-14deg);opacity:0;}60%{transform:scale(.92) rotate(2deg);opacity:1;}100%{transform:scale(1) rotate(0);opacity:1;}}
+.daycard-body{flex:1;min-width:0;}
+.daycard-date{font-size:11px;color:var(--ink-faint);margin-bottom:2px;}
+.daycard-task{font-size:14px;font-weight:500;margin-bottom:3px;line-height:1.4;}
+.daycard-action{font-size:12px;color:var(--ink-soft);line-height:1.55;margin-bottom:6px;}
+.daycard-foot{display:flex;gap:7px;flex-wrap:wrap;align-items:center;font-size:11px;}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-block;letter-spacing:.04em;flex-shrink:0;}
+.tag-high{border:1px solid var(--bronze);color:var(--bronze);}
+.tag-mid{border:1px solid var(--ink-faint);color:var(--ink-soft);}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.badge-normal{background:var(--paper-deep);color:var(--ink-soft);}
+.badge-today{background:var(--seal);color:#fff;font-weight:700;}
+.badge-overdue{background:var(--seal-tint);color:var(--seal-dark);font-weight:700;}
+.badge-done{background:var(--bronze-tint);color:#5c4a1f;}
+.crit{font-size:11px;color:var(--ink-faint);}
+
+#weekly-list{padding:16px;}
+.weekcard{background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:14px 15px;margin-bottom:11px;}
+.weekcard.current{border-color:var(--seal);border-width:1.5px;}
+.weekcard-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;gap:8px;}
+.weekcard-label{font-family:'Noto Serif SC',serif;font-weight:700;font-size:14.5px;flex-shrink:0;}
+.weekcard-range{font-size:11px;color:var(--ink-faint);text-align:right;}
+.weekcard-goal{font-size:13.5px;margin:5px 0 3px;font-weight:500;}
+.weekcard-actions{font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.55;}
+.counter-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.counter-row:last-child{margin-bottom:0;}
+.counter-label{font-size:12px;color:var(--ink-soft);width:38px;flex-shrink:0;}
+.counter-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--line);background:var(--paper-deep);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;line-height:1;}
+.counter-btn:active{transform:scale(.92);}
+.counter-value{font-weight:700;font-size:13.5px;min-width:46px;text-align:center;flex-shrink:0;}
+.counter-bar{flex:1;height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden;}
+.counter-bar span{display:block;height:100%;background:var(--bronze);border-radius:3px;transition:width .25s ease;}
+
+#checklist-list{padding:16px;}
+.checkitem{display:flex;gap:11px;background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 13px;margin-bottom:9px;}
+.checkitem.overdue{border-color:var(--seal);}
+.checkbox-btn{width:29px;height:29px;border-radius:5px;border:1.5px solid var(--line);background:var(--paper-deep);flex-shrink:0;cursor:pointer;margin-top:1px;padding:0;}
+.checkbox-btn.checked{background:var(--seal);border-color:var(--seal-dark);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);animation:stampIn .28s ease-out;}
+.check-body{flex:1;min-width:0;}
+.check-cat{font-size:10.5px;color:var(--bronze);font-weight:700;letter-spacing:.04em;margin-bottom:2px;}
+.check-item-text{font-size:13.5px;font-weight:500;margin-bottom:5px;line-height:1.4;}
+.check-foot{display:flex;gap:7px;flex-wrap:wrap;align-items:center;font-size:11px;}
+
+.offer-pills{display:flex;gap:8px;padding:16px 16px 8px;}
+.offer-pill{flex:1;padding:9px 0;text-align:center;border-radius:6px;border:1px solid var(--line);background:var(--paper-card);font-size:13px;cursor:pointer;color:var(--ink-soft);}
+.offer-pill.active{background:var(--seal);border-color:var(--seal-dark);color:#fff;font-weight:700;}
+.offer-summary{display:flex;justify-content:space-around;padding:12px 10px;margin:0 16px 16px;background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);}
+.offer-summary-item{text-align:center;}
+.offer-summary-item strong{display:block;font-family:'Noto Serif SC',serif;font-size:18px;}
+.offer-summary-item.leading strong{color:var(--seal-dark);}
+.offer-summary-item span{font-size:10.5px;color:var(--ink-soft);}
+#offer-dims{padding:0 16px 16px;}
+.dimrow{background:var(--paper-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 14px;margin-bottom:9px;}
+.dimrow-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;}
+.dimrow-name{font-size:14px;font-weight:500;}
+.dimrow-weight{font-size:11px;color:var(--bronze);font-weight:700;flex-shrink:0;}
+.dimrow-desc{font-size:11.5px;color:var(--ink-soft);margin:2px 0 9px;line-height:1.5;}
+.scoregrid{display:flex;gap:4px;flex-wrap:wrap;}
+.scorecell{width:26px;height:26px;border-radius:4px;border:1.5px solid var(--line);background:var(--paper-deep);font-size:11px;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.scorecell.active{background:var(--seal);border-color:var(--seal-dark);color:#fff;font-weight:700;}
+.offer-method{margin:0 16px 16px;font-size:11.5px;color:var(--ink-faint);line-height:1.6;padding:10px 12px;background:var(--paper-card);border-radius:var(--radius);border:1px solid var(--line-soft);}
+
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;display:flex;background:var(--paper-card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:6px 0;color:var(--ink-faint);font-size:10.5px;cursor:pointer;min-width:0;}
+.tab.active{color:var(--seal);}
+.tab svg{width:19px;height:19px;}
+.tab span{white-space:nowrap;}
+
+.modal-mask{position:fixed;inset:0;background:rgba(36,32,25,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;}
+.modal-box{background:var(--paper-card);border-radius:8px;padding:22px;max-width:320px;width:100%;text-align:center;}
+.modal-box p{font-size:13.5px;line-height:1.65;margin:0 0 18px;color:var(--ink);}
+.modal-actions{display:flex;gap:10px;}
+.modal-actions button{flex:1;padding:11px 0;border-radius:6px;font-size:13.5px;cursor:pointer;border:none;}
+#reset-cancel{background:var(--paper-deep);color:var(--ink);}
+#reset-confirm{background:var(--seal);color:#fff;}
+
+[hidden]{display:none !important;}
+@media (prefers-reduced-motion:reduce){ .daycheck.checked,.checkbox-btn.checked,.milestone-check.checked{animation:none;} *{transition-duration:.01ms !important;} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>稳行</h1>
+      <p class="sub">离职准备与求职 · 2026年8月—9月</p>
+    </div>
+    <div class="brush-divider"></div>
+  </header>
+
+  <main id="view-overview" class="view">
+    <div id="today-slot"></div>
+
+    <section class="hero">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-track" cx="50" cy="50" r="42"/>
+          <circle class="ring-fill" id="ov-ring-fill" cx="50" cy="50" r="42"/>
+        </svg>
+        <div class="hero-pct" id="ov-hero-pct">0%</div>
+      </div>
+      <div class="hero-sub">61天计划完成度</div>
+    </section>
+
+    <div class="stat-row">
+      <div class="stat-item"><strong id="ov-done-count">0</strong><span>已完成</span></div>
+      <div class="stat-item warn"><strong id="ov-overdue-count">0</strong><span>待补上</span></div>
+      <div class="stat-item"><strong id="ov-total-count">61</strong><span>总天数</span></div>
+    </div>
+
+    <section class="time-block">
+      <div class="time-label-row"><span>计划时间进度</span><span id="ov-time-pct">0%</span></div>
+      <div class="time-bar-track"><div class="time-bar-fill" id="ov-time-bar"></div></div>
+      <p class="time-daylabel" id="ov-day-label">—</p>
+    </section>
+
+    <h3 class="section-title">关键节点</h3>
+    <div class="milestone-list" id="ov-milestones"></div>
+
+    <h3 class="section-title">待补上的任务</h3>
+    <div class="overdue-list" id="ov-overdue-list"></div>
+
+    <h3 class="section-title">五个阶段</h3>
+    <div class="modlist" id="ov-modlist"></div>
+
+    <p class="plan-note" id="ov-note"></p>
+    <p class="storage-hint">打卡记录自动保存在本机</p>
+    <button id="reset-btn" class="reset-link">重置全部打卡记录</button>
+  </main>
+
+  <main id="view-daily" class="view" hidden>
+    <div class="goals-toolbar">
+      <button id="expand-all">展开全部</button>
+      <button id="collapse-all">收起全部</button>
+    </div>
+    <div id="daily-list"></div>
+  </main>
+
+  <main id="view-weekly" class="view" hidden>
+    <div id="weekly-list"></div>
+  </main>
+
+  <main id="view-checklist" class="view" hidden>
+    <div id="checklist-list"></div>
+  </main>
+
+  <main id="view-offer" class="view" hidden>
+    <div class="offer-pills" id="offer-pills"></div>
+    <div class="offer-summary" id="offer-summary"></div>
+    <div id="offer-dims"></div>
+    <p class="offer-method">每个维度给各Offer打1—10分，综合得分按权重自动计算；分数只是辅助，还要核实合同和岗位真实性。</p>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/></svg>
+      <span>总览</span>
+    </button>
+    <button class="tab" data-view="daily">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M8.5 12l2.3 2.3L15.5 9.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>日程</span>
+    </button>
+    <button class="tab" data-view="weekly">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="8.5" y1="3" x2="8.5" y2="7"/><line x1="15.5" y1="3" x2="15.5" y2="7"/></svg>
+      <span>周计划</span>
+    </button>
+    <button class="tab" data-view="checklist">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      <span>清单</span>
+    </button>
+    <button class="tab" data-view="offer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="12" width="3" height="7" fill="currentColor" stroke="none"/><rect x="10.5" y="8" width="3" height="11" fill="currentColor" stroke="none"/><rect x="16" y="4" width="3" height="15" fill="currentColor" stroke="none"/></svg>
+      <span>Offer</span>
+    </button>
+  </nav>
+
+</div>
+
+<div id="reset-modal" class="modal-mask" hidden>
+  <div class="modal-box">
+    <p>确定要清空全部打卡、周计划和Offer评分记录吗？此操作无法撤销。</p>
+    <div class="modal-actions">
+      <button id="reset-cancel">取消</button>
+      <button id="reset-confirm">确定清空</button>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="plan-data">{"planStart":"2026-08-01","planEnd":"2026-09-30","note":"建议：在未确认财务安全线、离职通知期和下一步方向前，不要冲动裸辞。","phases":[{"name":"启动评估与风险排查","count":10},{"name":"求职定位与材料准备","count":15},{"name":"试投与正式提离","count":15},{"name":"面试与Offer推进","count":16},{"name":"交接与离职收尾","count":5}],"milestones":[{"id":1,"name":"完成离职与财务评估","date":"2026-08-09","criteria":"明确是否具备离职条件"},{"id":2,"name":"完成简历与作品集","date":"2026-08-23","criteria":"简历2—3版，案例3—5个"},{"id":3,"name":"正式提出离职","date":"2026-09-08","criteria":"完成口头沟通与书面申请"},{"id":4,"name":"确认Offer并完成离职","date":"2026-09-30","criteria":"完成交接并尽量确认新工作"}],"daily":[{"id":1,"date":"2026-08-01","weekday":"周六","theme":"启动评估","task":"明确离职原因","action":"写清离职原因，区分暂时情绪与长期问题","time":"30—60分钟","criteria":"完成《离职原因清单》","priority":"高","notes":"","phaseIdx":0},{"id":2,"date":"2026-08-02","weekday":"周日","theme":"启动评估","task":"明确下一份工作要求","action":"列出目标岗位、行业、城市、薪资及不可接受条件","time":"30—60分钟","criteria":"完成《求职标准表》","priority":"高","notes":"","phaseIdx":0},{"id":3,"date":"2026-08-03","weekday":"周一","theme":"财务评估","task":"统计每月固定支出","action":"整理房租、吃饭、交通、贷款、保险等必要支出","time":"45—60分钟","criteria":"算出每月最低生活成本","priority":"高","notes":"","phaseIdx":0},{"id":4,"date":"2026-08-04","weekday":"周二","theme":"财务评估","task":"核算空窗承受能力","action":"计算现有存款可维持的月数并设定最低存款线","time":"45—60分钟","criteria":"明确最长空窗期","priority":"高","notes":"","phaseIdx":0},{"id":5,"date":"2026-08-05","weekday":"周三","theme":"风险排查","task":"检查劳动合同","action":"查看离职通知期、竞业限制、保密义务和违约条款","time":"45—60分钟","criteria":"形成合同风险摘要","priority":"高","notes":"","phaseIdx":0},{"id":6,"date":"2026-08-06","weekday":"周四","theme":"风险排查","task":"核对奖金与权益","action":"确认奖金、提成、报销、年假、社保和公积金规则","time":"30—60分钟","criteria":"列出离职可能损失","priority":"高","notes":"","phaseIdx":0},{"id":7,"date":"2026-08-07","weekday":"周五","theme":"资料准备","task":"整理个人证明材料","action":"整理学历、证书、绩效、获奖和可公开工作成果","time":"45—60分钟","criteria":"资料电子版归档","priority":"中","notes":"","phaseIdx":0},{"id":8,"date":"2026-08-08","weekday":"周六","theme":"风险排查","task":"制定风险应对方案","action":"列出至少5项离职风险及对应解决办法","time":"20—40分钟","criteria":"完成风险清单","priority":"中","notes":"","phaseIdx":0},{"id":9,"date":"2026-08-09","weekday":"周日","theme":"决策节点","task":"确认是否按计划离职","action":"综合财务、合同和职业方向做第一次正式判断","time":"30—60分钟","criteria":"确定继续执行或调整","priority":"高","notes":"","phaseIdx":0},{"id":10,"date":"2026-08-10","weekday":"周一","theme":"求职定位","task":"搜集第一批目标岗位","action":"搜集10个高匹配岗位并记录要求","time":"45—60分钟","criteria":"完成10个岗位样本","priority":"中","notes":"","phaseIdx":1},{"id":11,"date":"2026-08-11","weekday":"周二","theme":"求职定位","task":"扩充岗位样本","action":"再搜集10—20个同类岗位","time":"20—40分钟","criteria":"岗位样本达到20—30个","priority":"中","notes":"","phaseIdx":1},{"id":12,"date":"2026-08-12","weekday":"周三","theme":"求职定位","task":"提炼岗位高频要求","action":"统计反复出现的技能、经验、软件和业绩要求","time":"30—60分钟","criteria":"形成高频要求清单","priority":"高","notes":"","phaseIdx":1},{"id":13,"date":"2026-08-13","weekday":"周四","theme":"能力盘点","task":"分析能力差距","action":"区分已具备、可快速补齐和短期难补的能力","time":"30—60分钟","criteria":"完成能力差距表","priority":"高","notes":"","phaseIdx":1},{"id":14,"date":"2026-08-14","weekday":"周五","theme":"求职定位","task":"建立三级岗位方向","action":"确定主投岗位、相近岗位和保底岗位","time":"30—60分钟","criteria":"完成A/B/C岗位路径","priority":"高","notes":"","phaseIdx":1},{"id":15,"date":"2026-08-15","weekday":"周六","theme":"薪资策略","task":"确定薪资区间","action":"设置理想薪资、目标薪资和最低可接受薪资","time":"30—60分钟","criteria":"形成薪资谈判底线","priority":"高","notes":"","phaseIdx":1},{"id":16,"date":"2026-08-16","weekday":"周日","theme":"公司池","task":"建立目标公司名单","action":"整理30家目标公司并分为A/B/C三档","time":"20—40分钟","criteria":"完成公司优先级名单","priority":"中","notes":"","phaseIdx":1},{"id":17,"date":"2026-08-17","weekday":"周一","theme":"简历准备","task":"梳理工作经历","action":"整理职责、项目、业绩和关键贡献","time":"60—90分钟","criteria":"完成经历素材库","priority":"中","notes":"","phaseIdx":1},{"id":18,"date":"2026-08-18","weekday":"周二","theme":"简历准备","task":"量化工作成果","action":"补充增长率、成交额、项目数、团队规模等数据","time":"60—90分钟","criteria":"至少量化5项成果","priority":"高","notes":"","phaseIdx":1},{"id":19,"date":"2026-08-19","weekday":"周三","theme":"简历准备","task":"完成通用版简历","action":"制作结构清晰、结果导向的通用简历","time":"60—90分钟","criteria":"完成简历V1","priority":"高","notes":"","phaseIdx":1},{"id":20,"date":"2026-08-20","weekday":"周四","theme":"简历准备","task":"制作定制版简历","action":"针对主投岗位调整关键词和项目排序","time":"60—90分钟","criteria":"完成2个定制版本","priority":"高","notes":"","phaseIdx":1},{"id":21,"date":"2026-08-21","weekday":"周五","theme":"作品准备","task":"整理作品集","action":"整理3—5个重点项目，删除公司机密","time":"60—90分钟","criteria":"作品集可直接发送","priority":"高","notes":"","phaseIdx":1},{"id":22,"date":"2026-08-22","weekday":"周六","theme":"面试准备","task":"准备自我介绍","action":"完成30秒、1分钟、3分钟三个版本","time":"60—90分钟","criteria":"能够自然表达","priority":"中","notes":"","phaseIdx":1},{"id":23,"date":"2026-08-23","weekday":"周日","theme":"面试准备","task":"准备面试案例","action":"按背景—任务—行动—结果—复盘整理案例并模拟一次","time":"60—90分钟","criteria":"至少准备6个案例","priority":"高","notes":"","phaseIdx":1},{"id":24,"date":"2026-08-24","weekday":"周一","theme":"试投阶段","task":"完善招聘平台资料","action":"更新头像、标题、技能、期望岗位和求职状态","time":"20—40分钟","criteria":"平台资料完整","priority":"中","notes":"","phaseIdx":2},{"id":25,"date":"2026-08-25","weekday":"周二","theme":"试投阶段","task":"第一轮精投","action":"精投3—5个高匹配岗位并定制开场语","time":"30—60分钟","criteria":"完成首轮投递","priority":"高","notes":"","phaseIdx":2},{"id":26,"date":"2026-08-26","weekday":"周三","theme":"渠道拓展","task":"联系内推与猎头","action":"联系前同事、同行、朋友和可信猎头","time":"20—40分钟","criteria":"新增3个有效渠道","priority":"中","notes":"","phaseIdx":2},{"id":27,"date":"2026-08-27","weekday":"周四","theme":"试投复盘","task":"根据反馈修改简历","action":"分析回复率、简历浏览和招聘方反馈","time":"60—90分钟","criteria":"完成简历V2","priority":"高","notes":"","phaseIdx":2},{"id":28,"date":"2026-08-28","weekday":"周五","theme":"试投阶段","task":"第二轮精投","action":"再精投3—5个岗位并跟进第一轮","time":"30—60分钟","criteria":"累计投递8—10个","priority":"高","notes":"","phaseIdx":2},{"id":29,"date":"2026-08-29","weekday":"周六","theme":"面试准备","task":"练习核心面试问题","action":"重点练离职原因、职业规划、薪资和项目案例","time":"60—90分钟","criteria":"完成第二次模拟","priority":"高","notes":"","phaseIdx":2},{"id":30,"date":"2026-08-30","weekday":"周日","theme":"数据复盘","task":"统计试投结果","action":"计算投递数、回复率、沟通数和面试数","time":"45—60分钟","criteria":"完成8月求职复盘","priority":"中","notes":"","phaseIdx":2},{"id":31,"date":"2026-08-31","weekday":"周一","theme":"决策节点","task":"确认9月提离计划","action":"根据市场反馈决定是否按计划正式提离","time":"30—60分钟","criteria":"确定9月执行方案","priority":"高","notes":"","phaseIdx":2},{"id":32,"date":"2026-09-01","weekday":"周二","theme":"离职规划","task":"确定最后工作日","action":"结合通知期、项目节点和收入结算确定日期","time":"30—60分钟","criteria":"明确最后工作日","priority":"高","notes":"","phaseIdx":2},{"id":33,"date":"2026-09-02","weekday":"周三","theme":"离职沟通","task":"准备离职话术","action":"准备对直属领导和人事的简洁表达","time":"30—60分钟","criteria":"话术可直接使用","priority":"高","notes":"","phaseIdx":2},{"id":34,"date":"2026-09-03","weekday":"周四","theme":"交接准备","task":"整理负责项目","action":"列出全部项目、进度、负责人和待办事项","time":"60—90分钟","criteria":"完成项目总表","priority":"高","notes":"","phaseIdx":2},{"id":35,"date":"2026-09-04","weekday":"周五","theme":"交接准备","task":"整理文件与账号","action":"记录文件路径、系统账号、联系人及权限","time":"60—90分钟","criteria":"完成资料目录","priority":"高","notes":"","phaseIdx":2},{"id":36,"date":"2026-09-05","weekday":"周六","theme":"交接准备","task":"制作交接模板","action":"建立项目进度、风险、待办和联系人字段","time":"60—90分钟","criteria":"交接文档成型","priority":"中","notes":"","phaseIdx":2},{"id":37,"date":"2026-09-06","weekday":"周日","theme":"求职推进","task":"安排9月面试","action":"整理已沟通岗位并预留面试时间","time":"60—90分钟","criteria":"形成面试日历","priority":"中","notes":"","phaseIdx":2},{"id":38,"date":"2026-09-07","weekday":"周一","theme":"正式提离","task":"与直属领导沟通","action":"正式表达离职决定并说明交接安排","time":"30—60分钟","criteria":"完成口头沟通","priority":"高","notes":"","phaseIdx":3},{"id":39,"date":"2026-09-08","weekday":"周二","theme":"正式提离","task":"提交书面申请","action":"按照公司流程提交离职申请","time":"30—60分钟","criteria":"获得流程确认","priority":"高","notes":"","phaseIdx":3},{"id":40,"date":"2026-09-09","weekday":"周三","theme":"权益确认","task":"与人事核对结算","action":"确认工资、奖金、提成、年假、社保和公积金","time":"30—60分钟","criteria":"关键事项有书面记录","priority":"高","notes":"","phaseIdx":3},{"id":41,"date":"2026-09-10","weekday":"周四","theme":"权益确认","task":"确认离职证明","action":"确认开具方式、内容和领取时间","time":"20—40分钟","criteria":"明确证明安排","priority":"中","notes":"","phaseIdx":3},{"id":42,"date":"2026-09-11","weekday":"周五","theme":"交接执行","task":"确认接手人","action":"与接手人逐项确认交接范围和优先级","time":"60—90分钟","criteria":"完成交接分工","priority":"高","notes":"","phaseIdx":3},{"id":43,"date":"2026-09-12","weekday":"周六","theme":"交接执行","task":"更新项目进度","action":"补全待办、风险、时间节点和外部联系人","time":"60—90分钟","criteria":"交接信息最新","priority":"高","notes":"","phaseIdx":3},{"id":44,"date":"2026-09-13","weekday":"周日","theme":"求职推进","task":"周度投递与复盘","action":"继续精投并复盘本周面试反馈","time":"20—40分钟","criteria":"重点岗位持续推进","priority":"中","notes":"","phaseIdx":3},{"id":45,"date":"2026-09-14","weekday":"周一","theme":"集中面试","task":"整理本周面试安排","action":"确认时间、岗位、面试官和准备重点","time":"60—90分钟","criteria":"面试计划清晰","priority":"中","notes":"","phaseIdx":3},{"id":46,"date":"2026-09-15","weekday":"周二","theme":"集中面试","task":"研究目标公司","action":"研究产品、客户、业务模式和竞争对手","time":"60—90分钟","criteria":"完成公司速查卡","priority":"高","notes":"","phaseIdx":3},{"id":47,"date":"2026-09-16","weekday":"周三","theme":"集中面试","task":"参加面试并记录","action":"面试后立即记录问题、表现和后续动作","time":"60—90分钟","criteria":"完成面试复盘","priority":"高","notes":"","phaseIdx":3},{"id":48,"date":"2026-09-17","weekday":"周四","theme":"集中面试","task":"优化薄弱回答","action":"针对回答不佳的问题重新组织表达","time":"60—90分钟","criteria":"形成改进版答案","priority":"高","notes":"","phaseIdx":3},{"id":49,"date":"2026-09-18","weekday":"周五","theme":"集中面试","task":"准备复试或业务面","action":"针对业务案例、团队协作和结果指标准备","time":"60—90分钟","criteria":"完成复试准备","priority":"高","notes":"","phaseIdx":3},{"id":50,"date":"2026-09-19","weekday":"周六","theme":"公司评估","task":"排查岗位风险","action":"评估业务稳定性、团队流动、职责真实性和加班","time":"60—90分钟","criteria":"完成风险评分","priority":"高","notes":"","phaseIdx":3},{"id":51,"date":"2026-09-20","weekday":"周日","theme":"机会排序","task":"给所有机会排序","action":"按意愿、薪资、发展、领导和稳定性评分","time":"20—40分钟","criteria":"明确重点跟进顺序","priority":"中","notes":"","phaseIdx":3},{"id":52,"date":"2026-09-21","weekday":"周一","theme":"Offer推进","task":"跟进终面结果","action":"主动跟进已完成终面的公司","time":"60—90分钟","criteria":"明确各机会状态","priority":"高","notes":"","phaseIdx":3},{"id":53,"date":"2026-09-22","weekday":"周二","theme":"Offer评估","task":"核实薪酬结构","action":"确认固定薪资、绩效、奖金、补贴和试用期","time":"60—90分钟","criteria":"薪酬信息完整","priority":"高","notes":"","phaseIdx":3},{"id":54,"date":"2026-09-23","weekday":"周三","theme":"Offer评估","task":"了解直属领导与团队","action":"核实汇报对象、团队配置和岗位支持资源","time":"60—90分钟","criteria":"完成管理环境评估","priority":"高","notes":"","phaseIdx":3},{"id":55,"date":"2026-09-24","weekday":"周四","theme":"Offer评估","task":"对比不同机会","action":"使用Offer对比表进行综合评分","time":"60—90分钟","criteria":"形成候选排序","priority":"高","notes":"","phaseIdx":3},{"id":56,"date":"2026-09-25","weekday":"周五","theme":"Offer决策","task":"完成薪资沟通","action":"表达合理预期并确认最终条件","time":"60—90分钟","criteria":"尽量获得正式Offer","priority":"高","notes":"","phaseIdx":3},{"id":57,"date":"2026-09-26","weekday":"周六","theme":"入职准备","task":"确认入职安排","action":"确认入职日期、材料、体检及报到方式","time":"20—40分钟","criteria":"入职事项清晰","priority":"中","notes":"","phaseIdx":4},{"id":58,"date":"2026-09-27","weekday":"周日","theme":"入职准备","task":"制定入职30天计划","action":"列出要认识的人、掌握的流程和首个成果","time":"20—40分钟","criteria":"完成30天计划","priority":"中","notes":"","phaseIdx":4},{"id":59,"date":"2026-09-28","weekday":"周一","theme":"离职收尾","task":"完成最终交接","action":"逐项确认交接完成并处理遗留问题","time":"60—90分钟","criteria":"交接签字或确认","priority":"高","notes":"","phaseIdx":4},{"id":60,"date":"2026-09-29","weekday":"周二","theme":"离职收尾","task":"归还公司物品","action":"归还电脑、门禁卡、钥匙及其他资产","time":"30—60分钟","criteria":"资产归还完成","priority":"高","notes":"","phaseIdx":4},{"id":61,"date":"2026-09-30","weekday":"周三","theme":"离职收尾","task":"完成离职手续","action":"核对工资、报销、证明、社保、公积金并解绑账号","time":"30—60分钟","criteria":"正式完成离职","priority":"高","notes":"","phaseIdx":4}],"weekly":[{"id":1,"label":"第1周","rangeText":"8月1日—8月9日","startDate":"2026-08-01","endDate":"2026-08-09","goal":"完成离职、财务和合同评估","actions":"算清支出与空窗期，确认合同和权益","targetApply":0,"targetInterview":0},{"id":2,"label":"第2周","rangeText":"8月10日—8月16日","startDate":"2026-08-10","endDate":"2026-08-16","goal":"明确求职方向","actions":"分析岗位要求，建立30家公司池","targetApply":0,"targetInterview":0},{"id":3,"label":"第3周","rangeText":"8月17日—8月23日","startDate":"2026-08-17","endDate":"2026-08-23","goal":"完成全部求职材料","actions":"简历、作品集、自我介绍、案例准备","targetApply":0,"targetInterview":0},{"id":4,"label":"第4周","rangeText":"8月24日—8月31日","startDate":"2026-08-24","endDate":"2026-08-31","goal":"试投并验证市场反馈","actions":"精投、内推、模拟面试、调整简历","targetApply":15,"targetInterview":2},{"id":5,"label":"第5周","rangeText":"9月1日—9月6日","startDate":"2026-09-01","endDate":"2026-09-06","goal":"确定离职与交接方案","actions":"确定最后工作日，制作交接文档","targetApply":8,"targetInterview":1},{"id":6,"label":"第6周","rangeText":"9月7日—9月13日","startDate":"2026-09-07","endDate":"2026-09-13","goal":"正式提离并启动交接","actions":"提交申请、确认权益、持续求职","targetApply":10,"targetInterview":2},{"id":7,"label":"第7周","rangeText":"9月14日—9月20日","startDate":"2026-09-14","endDate":"2026-09-20","goal":"集中面试和公司评估","actions":"面试、复盘、风险排查、机会排序","targetApply":8,"targetInterview":3},{"id":8,"label":"第8周","rangeText":"9月21日—9月27日","startDate":"2026-09-21","endDate":"2026-09-27","goal":"推进Offer并做决策","actions":"跟进终面、核薪、谈薪、确认入职","targetApply":5,"targetInterview":2},{"id":9,"label":"收尾期","rangeText":"9月28日—9月30日","startDate":"2026-09-28","endDate":"2026-09-30","goal":"完成离职收尾","actions":"最终交接、归还资产、办理手续","targetApply":0,"targetInterview":0}],"checklist":[{"id":1,"category":"财务安全","item":"准备至少3个月必要生活费","date":"2026-08-09","importance":"高"},{"id":2,"category":"合同权益","item":"确认离职通知期、竞业和保密义务","date":"2026-08-09","importance":"高"},{"id":3,"category":"合同权益","item":"确认工资、奖金、提成、年假和报销结算","date":"2026-09-10","importance":"高"},{"id":4,"category":"求职材料","item":"完成通用版和定制版简历","date":"2026-08-23","importance":"高"},{"id":5,"category":"求职材料","item":"完成3—5个项目案例或作品集","date":"2026-08-23","importance":"高"},{"id":6,"category":"求职材料","item":"准备自我介绍和面试案例","date":"2026-08-23","importance":"中"},{"id":7,"category":"求职渠道","item":"建立招聘平台、内推和猎头渠道","date":"2026-09-01","importance":"中"},{"id":8,"category":"离职沟通","item":"与直属领导正式沟通并提交申请","date":"2026-09-08","importance":"高"},{"id":9,"category":"工作交接","item":"整理项目、文件、账号、联系人和风险","date":"2026-09-20","importance":"高"},{"id":10,"category":"证明材料","item":"确认离职证明开具与领取","date":"2026-09-30","importance":"高"},{"id":11,"category":"资产归还","item":"归还电脑、门禁卡、钥匙等公司资产","date":"2026-09-29","importance":"高"},{"id":12,"category":"账号安全","item":"退出工作账号并解绑个人联系方式","date":"2026-09-30","importance":"高"},{"id":13,"category":"社保公积金","item":"确认缴纳截止月份和后续衔接","date":"2026-09-30","importance":"高"},{"id":14,"category":"职业关系","item":"保留可做背调或推荐的联系人","date":"2026-09-30","importance":"中"},{"id":15,"category":"入职准备","item":"确认新工作入职日期、材料和报到方式","date":"2026-09-27","importance":"中"}],"offerDims":[{"id":1,"name":"固定薪资","weight":0.2,"desc":"1—10分：与目标薪资越接近分数越高"},{"id":2,"name":"奖金与福利","weight":0.08,"desc":"绩效、年终奖、补贴、社保公积金"},{"id":3,"name":"岗位匹配度","weight":0.15,"desc":"职责是否符合长期方向"},{"id":4,"name":"发展空间","weight":0.15,"desc":"项目资源、晋升和能力成长"},{"id":5,"name":"直属领导","weight":0.12,"desc":"管理方式、专业能力和信任度"},{"id":6,"name":"团队与文化","weight":0.08,"desc":"协作氛围和人员稳定性"},{"id":7,"name":"工作强度","weight":0.08,"desc":"加班、出差和休息安排"},{"id":8,"name":"通勤成本","weight":0.05,"desc":"时间、交通费用和可持续性"},{"id":9,"name":"公司稳定性","weight":0.09,"desc":"业务、现金流和人员流动"}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('plan-data').textContent);
+const { planStart, planEnd, note, phases, milestones, daily, weekly, checklist, offerDims } = DATA;
+const RING_C = 2*Math.PI*42;
+const OFFER_KEYS = ['A','B','C','D'];
+
+/* ---------- dual-layer persistence ---------- */
+const STORE_KEY = 'resign-plan-state-v1';
+function hasClaudeStorage(){
+  return typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+}
+async function storageGet(){
+  if(hasClaudeStorage()){
+    try{ const r = await window.storage.get(STORE_KEY); return (r && r.value) ? JSON.parse(r.value) : null; }
+    catch(e){ return null; }
+  }
+  try{ const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+async function storageSet(obj){
+  const json = JSON.stringify(obj);
+  if(hasClaudeStorage()){
+    try{ await window.storage.set(STORE_KEY, json); }catch(e){ console.error('claude storage save failed', e); }
+    return;
+  }
+  try{ localStorage.setItem(STORE_KEY, json); }catch(e){ console.error('localStorage save failed', e); }
+}
+
+let state = { daily:{}, milestones:{}, checklist:{}, weekly:{}, offers:{} };
+
+function ensureShape(){
+  daily.forEach(d=>{ if(typeof state.daily[d.id] !== 'boolean') state.daily[d.id] = false; });
+  milestones.forEach(m=>{ if(typeof state.milestones[m.id] !== 'boolean') state.milestones[m.id] = false; });
+  checklist.forEach(c=>{ if(typeof state.checklist[c.id] !== 'boolean') state.checklist[c.id] = false; });
+  weekly.forEach(w=>{ if(!state.weekly[w.id]) state.weekly[w.id] = {apply:0, interview:0}; });
+  OFFER_KEYS.forEach(k=>{
+    if(!state.offers[k]) state.offers[k] = {};
+    offerDims.forEach(d=>{ if(typeof state.offers[k][d.id] !== 'number') state.offers[k][d.id] = 0; });
+  });
+}
+async function persist(){ await storageSet(state); }
+
+/* ---------- date helpers ---------- */
+function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function todayMid(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+
+function dayTiming(d){
+  if(state.daily[d.id]) return {state:'done'};
+  const diff = daysBetween(todayMid(), parseYMD(d.date));
+  if(diff===0) return {state:'today'};
+  if(diff<0) return {state:'overdue', days:-diff};
+  return {state:'upcoming', days:diff};
+}
+function itemTiming(c){
+  if(state.checklist[c.id]) return {state:'done'};
+  const diff = daysBetween(todayMid(), parseYMD(c.date));
+  if(diff===0) return {state:'today'};
+  if(diff<0) return {state:'overdue', days:-diff};
+  return {state:'upcoming', days:diff};
+}
+function timingBadgeHTML(t){
+  if(t.state==='done') return `<span class="badge badge-done">已完成</span>`;
+  if(t.state==='today') return `<span class="badge badge-today">今天</span>`;
+  if(t.state==='overdue') return `<span class="badge badge-overdue">逾期${t.days}天</span>`;
+  return `<span class="badge badge-normal">还有${t.days}天</span>`;
+}
+
+/* ---------- computed stats ---------- */
+function planStats(){
+  const total = daily.length;
+  const done = daily.filter(d=>state.daily[d.id]).length;
+  const today = todayMid();
+  const overdue = daily.filter(d=> !state.daily[d.id] && parseYMD(d.date) < today).length;
+  return {total, done, overdue, pct: total? Math.round(done/total*100):0};
+}
+function phaseStats(phaseIdx){
+  const ds = daily.filter(d=>d.phaseIdx===phaseIdx);
+  const done = ds.filter(d=>state.daily[d.id]).length;
+  return {total: ds.length, done, pct: ds.length? Math.round(done/ds.length*100):0};
+}
+function planTimeInfo(){
+  const s=parseYMD(planStart), e=parseYMD(planEnd), t=todayMid();
+  const totalDays = daysBetween(s,e)+1;
+  const raw = daysBetween(s,t);
+  const elapsed = Math.max(0, Math.min(totalDays, raw+1));
+  const pct = totalDays? Math.round(elapsed/totalDays*100):0;
+  let label;
+  if(raw < 0) label = `计划 ${planStart} 启动 · 还有 ${-raw} 天`;
+  else if(raw >= totalDays) label = '计划周期已结束';
+  else label = `第 ${raw+1} 天 / 共 ${totalDays} 天`;
+  return {pct, label};
+}
+function todayTask(){
+  const t = todayMid().getTime();
+  return daily.find(d => parseYMD(d.date).getTime() === t);
+}
+function offerTotal(key){
+  return offerDims.reduce((sum,d)=> sum + d.weight * (state.offers[key][d.id]||0), 0);
+}
+
+/* ---------- render: overview ---------- */
+function renderTodaySlot(){
+  const slot = document.getElementById('today-slot');
+  const t = todayMid();
+  const s = parseYMD(planStart), e = parseYMD(planEnd);
+  if(t < s){
+    slot.innerHTML = `<div class="today-empty">计划将于 <strong>${planStart}</strong> 启动，还有 ${daysBetween(t,s)} 天。<br>可以先熟悉一下整体安排。</div>`;
+    return;
+  }
+  if(t > e){
+    slot.innerHTML = `<div class="today-empty">计划周期（${planStart} ～ ${planEnd}）已结束。</div>`;
+    return;
+  }
+  const task = todayTask();
+  if(!task){ slot.innerHTML = ''; return; }
+  const done = state.daily[task.id];
+  slot.innerHTML = `<div class="today-card" id="today-card">
+    <div class="today-label">今日任务 · ${task.theme}</div>
+    <div class="today-date">${task.date}（${task.weekday}）</div>
+    <div class="today-task">${task.task}</div>
+    <div class="today-action">${task.action}</div>
+    <div class="today-meta"><span>建议${task.time}</span><span>达标：${task.criteria}</span></div>
+    <button class="today-btn${done?' done':''}" data-daycheck="${task.id}">${done?'今日已完成 ✓':'完成今日任务'}</button>
+  </div>`;
+}
+
+function renderOverview(){
+  const st = planStats();
+  const time = planTimeInfo();
+
+  renderTodaySlot();
+  document.getElementById('ov-hero-pct').textContent = st.pct+'%';
+  setRing('ov-ring-fill', st.pct);
+  document.getElementById('ov-done-count').textContent = st.done;
+  document.getElementById('ov-overdue-count').textContent = st.overdue;
+  document.getElementById('ov-total-count').textContent = st.total;
+
+  document.getElementById('ov-time-pct').textContent = time.pct+'%';
+  document.getElementById('ov-time-bar').style.width = time.pct+'%';
+  document.getElementById('ov-day-label').textContent = time.label;
+
+  document.getElementById('ov-milestones').innerHTML = milestones.map(m=>{
+    const checked = state.milestones[m.id];
+    return `<div class="milestone-item">
+      <button class="milestone-check${checked?' checked':''}" data-milestone="${m.id}" aria-label="${m.name}"></button>
+      <div class="milestone-body"><div class="milestone-name">${m.name}</div><div class="milestone-crit">${m.criteria}</div></div>
+      <div class="milestone-date">${m.date.slice(5)}</div>
+    </div>`;
+  }).join('');
+
+  const today = todayMid();
+  const overdueDays = daily.filter(d=> !state.daily[d.id] && parseYMD(d.date) < today)
+    .sort((a,b)=> parseYMD(a.date)-parseYMD(b.date));
+  const owrap = document.getElementById('ov-overdue-list');
+  if(overdueDays.length===0){
+    owrap.innerHTML = `<p class="empty-tip">目前没有逾期任务，进度正常。</p>`;
+  } else {
+    owrap.innerHTML = overdueDays.slice(0,6).map(d=>{
+      const diff = -daysBetween(today, parseYMD(d.date));
+      return `<button class="overdue-item" data-goto-day="${d.id}">
+        <span class="overdue-title">${d.date.slice(5)} · ${d.task}</span>
+        <span class="overdue-days">逾期${diff}天</span>
+      </button>`;
+    }).join('') + (overdueDays.length>6 ? `<p class="empty-tip">还有 ${overdueDays.length-6} 项逾期任务，前往"日程"页签查看全部</p>` : '');
+  }
+
+  document.getElementById('ov-modlist').innerHTML = phases.map((p,i)=>{
+    const s2 = phaseStats(i);
+    return `<button class="modrow" data-goto-phase="${i}">
+      <span class="modrow-name">${p.name}</span>
+      <span class="modrow-bar"><span style="width:${s2.pct}%"></span></span>
+      <span class="modrow-pct">${s2.pct}%</span>
+    </button>`;
+  }).join('');
+
+  document.getElementById('ov-note').textContent = note;
+}
+
+function setRing(id, pct){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.strokeDasharray = RING_C.toFixed(2);
+  el.style.strokeDashoffset = (RING_C - RING_C*pct/100).toFixed(2);
+}
+
+/* ---------- render: daily (phase accordion) ---------- */
+function dayCardHTML(d){
+  const t = dayTiming(d);
+  const checked = state.daily[d.id];
+  const cls = ['daycard'];
+  if(t.state==='today') cls.push('today');
+  if(t.state==='overdue') cls.push('overdue');
+  return `<div class="${cls.join(' ')}" id="day-${d.id}">
+    <button class="daycheck${checked?' checked':''}" data-daycheck="${d.id}" aria-label="打卡"></button>
+    <div class="daycard-body">
+      <div class="daycard-date">${d.date}（${d.weekday}）· ${d.theme}</div>
+      <div class="daycard-task">${d.task}</div>
+      <div class="daycard-action">${d.action}</div>
+      <div class="daycard-foot">
+        <span class="tag ${d.priority==='高'?'tag-high':'tag-mid'}">${d.priority}</span>
+        <span class="crit">${d.time}</span>
+        <span id="day-${d.id}-badge">${timingBadgeHTML(t)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function phaseAccordionHTML(phase, idx){
+  const s = phaseStats(idx);
+  const ds = daily.filter(d=>d.phaseIdx===idx);
+  return `<section class="modacc" data-phase="${idx}">
+    <button class="modacc-head" data-toggle="${idx}">
+      <span class="modname">${phase.name}</span>
+      <span class="modmeta"><span id="phase-${idx}-pct">${s.pct}%</span><span>${s.done}/${s.total}</span></span>
+      <span class="chevron">▾</span>
+    </button>
+    <div class="modacc-bar"><div class="modacc-bar-fill" id="phase-${idx}-bar" style="width:${s.pct}%"></div></div>
+    <div class="modacc-body" id="phasebody-${idx}" hidden>${ds.map(dayCardHTML).join('')}</div>
+  </section>`;
+}
+function renderDaily(){
+  document.getElementById('daily-list').innerHTML = phases.map((p,i)=>phaseAccordionHTML(p,i)).join('');
+}
+
+/* ---------- render: weekly ---------- */
+function weekCardHTML(w){
+  const t = todayMid();
+  const isCurrent = t >= parseYMD(w.startDate) && t <= parseYMD(w.endDate);
+  const wst = state.weekly[w.id];
+  const applyPct = w.targetApply? Math.min(100, Math.round(wst.apply/w.targetApply*100)) : 0;
+  const intPct = w.targetInterview? Math.min(100, Math.round(wst.interview/w.targetInterview*100)) : 0;
+  return `<div class="weekcard${isCurrent?' current':''}" id="week-${w.id}">
+    <div class="weekcard-head"><span class="weekcard-label">${w.label}</span><span class="weekcard-range">${w.rangeText}</span></div>
+    <div class="weekcard-goal">${w.goal}</div>
+    <div class="weekcard-actions">${w.actions}</div>
+    <div class="counter-row">
+      <span class="counter-label">投递</span>
+      <button class="counter-btn" data-wk="${w.id}" data-field="apply" data-delta="-1">－</button>
+      <span class="counter-value" id="week-${w.id}-apply-val">${wst.apply}/${w.targetApply}</span>
+      <button class="counter-btn" data-wk="${w.id}" data-field="apply" data-delta="1">＋</button>
+      <span class="counter-bar"><span id="week-${w.id}-apply-bar" style="width:${applyPct}%"></span></span>
+    </div>
+    <div class="counter-row">
+      <span class="counter-label">面试</span>
+      <button class="counter-btn" data-wk="${w.id}" data-field="interview" data-delta="-1">－</button>
+      <span class="counter-value" id="week-${w.id}-interview-val">${wst.interview}/${w.targetInterview}</span>
+      <button class="counter-btn" data-wk="${w.id}" data-field="interview" data-delta="1">＋</button>
+      <span class="counter-bar"><span id="week-${w.id}-interview-bar" style="width:${intPct}%"></span></span>
+    </div>
+  </div>`;
+}
+function renderWeekly(){
+  document.getElementById('weekly-list').innerHTML = weekly.map(weekCardHTML).join('');
+}
+function updateWeekDOM(w){
+  const wst = state.weekly[w.id];
+  const applyPct = w.targetApply? Math.min(100, Math.round(wst.apply/w.targetApply*100)) : 0;
+  const intPct = w.targetInterview? Math.min(100, Math.round(wst.interview/w.targetInterview*100)) : 0;
+  document.getElementById(`week-${w.id}-apply-val`).textContent = `${wst.apply}/${w.targetApply}`;
+  document.getElementById(`week-${w.id}-apply-bar`).style.width = applyPct+'%';
+  document.getElementById(`week-${w.id}-interview-val`).textContent = `${wst.interview}/${w.targetInterview}`;
+  document.getElementById(`week-${w.id}-interview-bar`).style.width = intPct+'%';
+}
+
+/* ---------- render: checklist ---------- */
+function checkItemHTML(c){
+  const t = itemTiming(c);
+  const checked = state.checklist[c.id];
+  return `<div class="checkitem${t.state==='overdue'?' overdue':''}" id="check-${c.id}">
+    <button class="checkbox-btn${checked?' checked':''}" data-check="${c.id}" aria-label="${c.item}"></button>
+    <div class="check-body">
+      <div class="check-cat">${c.category}</div>
+      <div class="check-item-text">${c.item}</div>
+      <div class="check-foot">
+        <span class="tag ${c.importance==='高'?'tag-high':'tag-mid'}">${c.importance}</span>
+        <span class="crit">${c.date}</span>
+        <span id="check-${c.id}-badge">${timingBadgeHTML(t)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function renderChecklist(){
+  const sorted = [...checklist].sort((a,b)=> parseYMD(a.date)-parseYMD(b.date));
+  document.getElementById('checklist-list').innerHTML = sorted.map(checkItemHTML).join('');
+}
+
+/* ---------- render: offer ---------- */
+let currentOfferKey = 'A';
+function renderOfferPills(){
+  document.getElementById('offer-pills').innerHTML = OFFER_KEYS.map(k=>
+    `<button class="offer-pill${k===currentOfferKey?' active':''}" data-offer-pill="${k}">Offer ${k}</button>`
+  ).join('');
+}
+function renderOfferSummary(){
+  const totals = OFFER_KEYS.map(k=>({k, v:offerTotal(k)}));
+  const maxV = Math.max(...totals.map(t=>t.v));
+  document.getElementById('offer-summary').innerHTML = totals.map(t=>
+    `<div class="offer-summary-item${t.v>0 && t.v===maxV?' leading':''}"><strong>${t.v.toFixed(1)}</strong><span>Offer ${t.k}</span></div>`
+  ).join('');
+}
+function dimRowHTML(d){
+  const score = state.offers[currentOfferKey][d.id] || 0;
+  let cells = '';
+  for(let i=1;i<=10;i++){
+    cells += `<button class="scorecell${score===i?' active':''}" data-dim="${d.id}" data-score="${i}">${i}</button>`;
+  }
+  return `<div class="dimrow" id="dim-${d.id}">
+    <div class="dimrow-head"><span class="dimrow-name">${d.name}</span><span class="dimrow-weight">权重${Math.round(d.weight*100)}%</span></div>
+    <div class="dimrow-desc">${d.desc}</div>
+    <div class="scoregrid">${cells}</div>
+  </div>`;
+}
+function renderOfferDims(){
+  document.getElementById('offer-dims').innerHTML = offerDims.map(dimRowHTML).join('');
+}
+function renderOffer(){ renderOfferPills(); renderOfferSummary(); renderOfferDims(); }
+
+function renderAll(){ renderOverview(); renderDaily(); renderWeekly(); renderChecklist(); renderOffer(); }
+
+/* ---------- DOM patch helpers ---------- */
+function updateDayDOM(d){
+  const card = document.getElementById('day-'+d.id);
+  const t = dayTiming(d);
+  if(card){
+    card.querySelector('.daycheck').classList.toggle('checked', !!state.daily[d.id]);
+    card.classList.toggle('today', t.state==='today');
+    card.classList.toggle('overdue', t.state==='overdue');
+    const b = document.getElementById(`day-${d.id}-badge`);
+    if(b) b.innerHTML = timingBadgeHTML(t);
+  }
+}
+function updatePhaseDOM(idx){
+  const s = phaseStats(idx);
+  const pctEl = document.getElementById('phase-'+idx+'-pct');
+  if(pctEl) pctEl.textContent = s.pct+'%';
+  const barEl = document.getElementById('phase-'+idx+'-bar');
+  if(barEl) barEl.style.width = s.pct+'%';
+  const countEl = document.querySelector(`.modacc[data-phase="${idx}"] .modmeta span:last-child`);
+  if(countEl) countEl.textContent = `${s.done}/${s.total}`;
+}
+
+/* ---------- interactions ---------- */
+function toggleDay(id){
+  const d = daily.find(x=>x.id===id);
+  state.daily[id] = !state.daily[id];
+  persist();
+  updateDayDOM(d);
+  updatePhaseDOM(d.phaseIdx);
+  renderOverview();
+  const btn = document.querySelector('.today-btn');
+  if(btn) renderTodaySlot();
+}
+function toggleMilestone(id){
+  state.milestones[id] = !state.milestones[id];
+  persist();
+  renderOverview();
+}
+function toggleCheck(id){
+  state.checklist[id] = !state.checklist[id];
+  persist();
+  const c = checklist.find(x=>x.id===id);
+  const item = document.getElementById('check-'+id);
+  if(item){
+    item.querySelector('.checkbox-btn').classList.toggle('checked', !!state.checklist[id]);
+    const t = itemTiming(c);
+    item.classList.toggle('overdue', t.state==='overdue');
+    document.getElementById(`check-${id}-badge`).innerHTML = timingBadgeHTML(t);
+  }
+}
+function bumpWeek(wid, field, delta){
+  const w = weekly.find(x=>x.id===wid);
+  const cur = state.weekly[wid][field];
+  state.weekly[wid][field] = Math.max(0, cur + delta);
+  persist();
+  updateWeekDOM(w);
+}
+function setOfferScore(dimId, score){
+  const cur = state.offers[currentOfferKey][dimId];
+  state.offers[currentOfferKey][dimId] = (cur === score) ? 0 : score;
+  persist();
+  const row = document.getElementById('dim-'+dimId);
+  if(row){
+    row.querySelectorAll('.scorecell').forEach(cell=>{
+      cell.classList.toggle('active', Number(cell.dataset.score) === state.offers[currentOfferKey][dimId]);
+    });
+  }
+  renderOfferSummary();
+}
+
+function switchTab(view){
+  document.querySelectorAll('.view').forEach(v=> v.hidden = (v.id !== 'view-'+view));
+  document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.view===view));
+}
+function expandPhase(idx){
+  const body = document.getElementById('phasebody-'+idx);
+  if(!body) return;
+  body.hidden = false;
+  document.querySelector(`.modacc[data-phase="${idx}"]`).classList.add('open');
+  requestAnimationFrame(()=> body.closest('.modacc').scrollIntoView({behavior:'smooth', block:'start'}));
+}
+function goToDay(dayId){
+  switchTab('daily');
+  const d = daily.find(x=>x.id===dayId);
+  expandPhase(d.phaseIdx);
+  setTimeout(()=>{
+    const card = document.getElementById('day-'+dayId);
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 80);
+}
+
+document.getElementById('app').addEventListener('click', (e)=>{
+  const dc = e.target.closest('[data-daycheck]');
+  if(dc){ toggleDay(Number(dc.dataset.daycheck)); return; }
+  const ms = e.target.closest('[data-milestone]');
+  if(ms){ toggleMilestone(Number(ms.dataset.milestone)); return; }
+  const ck = e.target.closest('[data-check]');
+  if(ck){ toggleCheck(Number(ck.dataset.check)); return; }
+  const toggleBtn = e.target.closest('[data-toggle]');
+  if(toggleBtn){
+    const idx = toggleBtn.dataset.toggle;
+    const body = document.getElementById('phasebody-'+idx);
+    body.hidden = !body.hidden;
+    toggleBtn.closest('.modacc').classList.toggle('open', !body.hidden);
+    return;
+  }
+  const gotoPhase = e.target.closest('[data-goto-phase]');
+  if(gotoPhase){ switchTab('daily'); expandPhase(gotoPhase.dataset.gotoPhase); return; }
+  const gotoDay = e.target.closest('[data-goto-day]');
+  if(gotoDay){ goToDay(Number(gotoDay.dataset.gotoDay)); return; }
+  const wkBtn = e.target.closest('[data-wk]');
+  if(wkBtn){ bumpWeek(Number(wkBtn.dataset.wk), wkBtn.dataset.field, Number(wkBtn.dataset.delta)); return; }
+  const pill = e.target.closest('[data-offer-pill]');
+  if(pill){ currentOfferKey = pill.dataset.offerPill; renderOffer(); return; }
+  const scoreCell = e.target.closest('[data-dim]');
+  if(scoreCell){ setOfferScore(Number(scoreCell.dataset.dim), Number(scoreCell.dataset.score)); return; }
+});
+
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=> switchTab(t.dataset.view)));
+document.getElementById('expand-all').addEventListener('click', ()=>{
+  document.querySelectorAll('.modacc-body').forEach(b=> b.hidden=false);
+  document.querySelectorAll('.modacc').forEach(m=> m.classList.add('open'));
+});
+document.getElementById('collapse-all').addEventListener('click', ()=>{
+  document.querySelectorAll('.modacc-body').forEach(b=> b.hidden=true);
+  document.querySelectorAll('.modacc').forEach(m=> m.classList.remove('open'));
+});
+document.getElementById('reset-btn').addEventListener('click', ()=>{ document.getElementById('reset-modal').hidden = false; });
+document.getElementById('reset-cancel').addEventListener('click', ()=>{ document.getElementById('reset-modal').hidden = true; });
+document.getElementById('reset-confirm').addEventListener('click', async ()=>{
+  state = { daily:{}, milestones:{}, checklist:{}, weekly:{}, offers:{} };
+  ensureShape();
+  await persist();
+  renderAll();
+  document.getElementById('reset-modal').hidden = true;
+});
+
+(async function init(){
+  const loaded = await storageGet();
+  if(loaded) state = loaded;
+  ensureShape();
+  renderAll();
+  document.getElementById('app').classList.add('ready');
+})();
+</script>
+</body>
+</html>
